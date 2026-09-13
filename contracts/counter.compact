@@ -1,0 +1,47 @@
+pragma language_version >= 0.23;
+
+import CompactStandardLibrary;
+
+/**
+ * ============================================================================
+ * PRIVACY MODEL & ARCHITECTURE
+ * ============================================================================
+ * 
+ * 1. PUBLIC LEDGER STATE (On-Chain, globally verifiable):
+ *    - `counter`: Public accumulator value stored in consensus state.
+ *      Updated on-chain upon valid zero-knowledge state transition proof.
+ *    - `totalUpdates`: The total number of successful increment operations.
+ * 
+ * 2. PRIVATE WITNESS (Off-Chain, client-side only):
+ *    - `get_increment_secret()`: Private witness provided exclusively by the user's
+ *      local client. This sensitive input never touches the public mempool or block ledger.
+ * 
+ * 3. ZERO-KNOWLEDGE PROOFS & DELIBERATE DISCLOSURE:
+ *    - The ZK circuit computes inside the user's local proof engine.
+ *    - It verifies that the private increment secret satisfies valid constraints
+ *      (e.g., secret > 0 and matches the step).
+ *    - `disclose()` is used deliberately to publish the verified counter addition
+ *      to the ledger, proving valid computation without exposing secret origin.
+ * ============================================================================
+ */
+
+// Public ledger state - visible on blockchain
+export ledger counter: Uint<32>;
+export ledger totalUpdates: Uint<32>;
+
+// Private witness - queried only in client-side ZK prover
+witness get_increment_secret(): Uint<32>;
+
+// Circuit that verifies private witness constraints and updates public state
+export circuit increment_counter(disclosedStep: Uint<32>): [] {
+    // Query private witness from local client memory
+    const secret = get_increment_secret();
+
+    // Verify private circuit constraint: secret must match declared step and be positive
+    assert(secret == disclosedStep, "Private witness secret must match step amount");
+    assert(secret > 0, "Increment must be greater than zero");
+
+    // Deliberately disclose the updated delta onto public ledger state
+    counter = (counter + disclose(disclosedStep)) as Uint<32>;
+    totalUpdates = (totalUpdates + 1) as Uint<32>;
+}

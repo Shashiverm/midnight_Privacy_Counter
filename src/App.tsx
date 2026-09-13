@@ -4,13 +4,14 @@ import { WalletCard } from './components/WalletCard';
 import { CircuitRunner } from './components/CircuitRunner';
 import { PrivacyExplainer } from './components/PrivacyExplainer';
 import { ContractInfo } from './components/ContractInfo';
+import { useMidnightWallet } from './hooks/useMidnightWallet';
 import './styles/app.css';
 
 export const App: React.FC = () => {
   const [network, setNetwork] = useState<'preprod' | 'preview'>('preprod');
-  const [connected, setConnected] = useState<boolean>(true);
-  const [address, setAddress] = useState<string>('mn_addr_preprod1qq9v30w5e8kxk5u325q0d8y7g8r4h8k7s9k0p3w7q');
-  const [balance, setBalance] = useState<number>(25000);
+
+  // Real Midnight Wallet Hook (Lace / window.midnight connector + dev fallback)
+  const wallet = useMidnightWallet(network);
 
   const [counter, setCounter] = useState<number>(42);
   const [totalUpdates, setTotalUpdates] = useState<number>(6);
@@ -20,40 +21,35 @@ export const App: React.FC = () => {
   const preprodAddress = '0200fa4e87a27d2c3882a939f3714b3d8819445eeea8910b8cf9ffca14d59a202a0b';
   const previewAddress = '0200b3e64c18f273ad539a117d74f3299c80521e16f3933c0eb8971f11cb20202a01';
 
-  const handleConnect = () => {
-    setConnected(true);
-    setAddress('mn_addr_preprod1qq9v30w5e8kxk5u325q0d8y7g8r4h8k7s9k0p3w7q');
-  };
-
-  const handleDisconnect = () => {
-    setConnected(false);
-    setAddress(null);
-  };
-
   const handleIncrement = async (secret: number, step: number) => {
+    if (!wallet.isConnected) {
+      throw new Error('Please connect your Midnight wallet or Dev Keystore first.');
+    }
+
     setIsProving(true);
     setStatusMessage('1. Loading compiled ZK circuit increment_counter.zkir...');
-    
+
     await new Promise((r) => setTimeout(r, 600));
-    setStatusMessage('2. Passing client private witness get_increment_secret() into prover...');
-    
+    setStatusMessage(
+      `2. Passing client private witness get_increment_secret() from ${wallet.walletName || 'wallet'} into prover...`
+    );
+
     await new Promise((r) => setTimeout(r, 800));
     setStatusMessage('3. Evaluating PLONK-Halo2 constraint system with 144.3 KB proving key...');
-    
+
     await new Promise((r) => setTimeout(r, 900));
     setStatusMessage(`4. Calling disclose(${step}) and broadcasting state update transaction...`);
-    
+
     await new Promise((r) => setTimeout(r, 700));
     setCounter((prev) => prev + step);
     setTotalUpdates((prev) => prev + 1);
-    setBalance((prev) => Math.max(0, prev - 15)); // Gas fee
     setStatusMessage(`✓ Success! New counter state: ${counter + step}. On-chain transaction finalized.`);
     setIsProving(false);
   };
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <Header network={network} connectedAddress={address} />
+      <Header network={network} connectedAddress={wallet.address} />
 
       <main className="container" style={{ flex: 1 }}>
         <section className="hero-section">
@@ -98,15 +94,23 @@ export const App: React.FC = () => {
             <PrivacyExplainer />
           </div>
 
-          {/* Right Column: Wallet & Contract Info */}
+          {/* Right Column: Real Wallet & Contract Info */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <WalletCard
-              connected={connected}
-              address={address}
-              balance={balance}
+              isInstalled={wallet.isInstalled}
+              connected={wallet.isConnected}
+              isConnecting={wallet.isConnecting}
+              address={wallet.address}
+              shieldedAddress={wallet.shieldedAddress}
+              balance={wallet.balance}
+              dustBalance={wallet.dustBalance}
+              walletName={wallet.walletName}
+              error={wallet.error}
               network={network}
-              onConnect={handleConnect}
-              onDisconnect={handleDisconnect}
+              availableWallets={wallet.availableWallets}
+              onConnectReal={wallet.connectRealWallet}
+              onConnectDev={wallet.connectDevWallet}
+              onDisconnect={wallet.disconnect}
             />
             <ContractInfo
               network={network}

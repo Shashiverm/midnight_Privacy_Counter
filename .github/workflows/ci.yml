@@ -1,0 +1,47 @@
+name: Midnight CI/CD
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build-and-test:
+    name: Compile Contracts & Run Test Suite
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js v22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Compact Compiler
+        run: |
+          curl --proto '=https' --tlsv1.2 -LsSf https://github.com/midnightntwrk/compact/releases/latest/download/compact-installer.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Verify Compiler
+        run: |
+          compact --version
+
+      - name: Install Dependencies
+        run: |
+          npm ci || npm install
+
+      - name: Compile Compact Contract
+        run: |
+          npm run compile
+
+      - name: Run Test Suite
+        run: |
+          npm test
+
+      - name: Build Web Frontend
+        run: |
+          npm run build

@@ -1,0 +1,55 @@
+{
+  "name": "midnight-privacy-counter",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Midnight privacy-preserving counter contract with deliberate disclosure and ZK circuits",
+  "author": "Midnight Moonshot Builder",
+  "license": "Apache-2.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "compile": "node scripts/compile.js contracts/counter.compact managed",
+    "test": "tsx tests/counter.test.ts",
+    "deploy": "tsx scripts/deploy.ts",
+    "deploy:preview": "tsx scripts/deploy.ts --network preview",
+    "deploy:preprod": "tsx scripts/deploy.ts --network preprod",
+    "deploy:simulate": "tsx scripts/simulate-deploy.ts"
+  },
+  "dependencies": {
+    "@midnight-ntwrk/compact-runtime": "^0.16.0",
+    "@midnight-ntwrk/midnight-js-contracts": "^4.1.1",
+    "@midnight-ntwrk/midnight-js-http-client-proof-provider": "^4.1.1",
+    "@midnight-ntwrk/midnight-js-indexer-public-data-provider": "^4.1.1",
+    "@midnight-ntwrk/midnight-js-network-id": "^4.1.1",
+    "@midnight-ntwrk/midnight-js-node-zk-config-provider": "^4.1.1",
+    "@midnight-ntwrk/midnight-js-protocol": "^4.1.1",
+    "@midnight-ntwrk/midnight-js-types": "^4.1.1",
+    "@midnight-ntwrk/wallet-sdk": "^1.2.0",
+    "@scure/bip39": "^2.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tsx": "^4.23.1",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "keywords": [
+    "midnight",
+    "zero-knowledge",
+    "zkp",
+    "compact",
+    "privacy",
+    "smart-contracts",
+    "risein"
+  ]
+}

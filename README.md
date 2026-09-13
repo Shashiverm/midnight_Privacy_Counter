@@ -206,6 +206,11 @@ Contract deployment confirmation showing the visible contract address:
 ----------------------------------------------------------------
 ```
 
+### 3. DApp Web Interface (White & Orange Theme with Midnight Lace Wallet)
+Full interactive application featuring wallet connection, balance tracking, deliberate disclosure execution, and zero-knowledge privacy data boundaries:
+
+![Midnight Privacy Counter DApp](docs/app_screenshot.png)
+
 ---
 
 ## Submission Checklist Verification

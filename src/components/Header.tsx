@@ -13,13 +13,14 @@ export const Header: React.FC<HeaderProps> = ({ network, connectedAddress }) => 
           <div className="brand-icon">🌑</div>
           <div>
             <h1 className="brand-title">Midnight Privacy Counter</h1>
-            <p className="brand-subtitle">New Moon Moonshot · Level 1</p>
+            <p className="brand-subtitle">Zero-Knowledge State Engine</p>
           </div>
         </div>
 
         <div className="header-meta">
-          <span className="badge badge-moon">
-            🌑 Phase: New Moon
+          <span className="badge badge-network">
+            <span className="status-dot"></span>
+            ZK Prover Online
           </span>
           <span className="badge badge-network">
             <span className="status-dot"></span>

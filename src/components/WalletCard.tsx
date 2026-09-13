@@ -11,10 +11,13 @@ interface WalletCardProps {
   walletName: string | null;
   error: string | null;
   network: string;
+  mismatchedNetwork?: string | null;
   availableWallets: Array<{ id: string; name: string; icon?: string }>;
+  activeNetwork?: string | null;
   onConnectReal: (walletId?: string) => Promise<void>;
   onConnectDev: () => void;
   onDisconnect: () => void;
+  onSwitchNetwork?: (network: 'preprod' | 'preview') => void;
 }
 
 export const WalletCard: React.FC<WalletCardProps> = ({
@@ -28,15 +31,39 @@ export const WalletCard: React.FC<WalletCardProps> = ({
   walletName,
   error,
   network,
+  activeNetwork,
+  mismatchedNetwork,
   availableWallets,
   onConnectReal,
   onConnectDev,
   onDisconnect,
+  onSwitchNetwork,
 }) => {
-  const formatAddress = (addr: string) => {
-    if (addr.length < 24) return addr;
-    return `${addr.slice(0, 14)}...${addr.slice(-8)}`;
+  const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
+
+  const formatAddress = (addr: any) => {
+    if (!addr) return '';
+    const str =
+      typeof addr === 'string'
+        ? addr
+        : addr?.unshieldedAddress || addr?.address || String(addr);
+    if (!str || typeof str.slice !== 'function' || str.length < 24) return String(str);
+    return `${str.slice(0, 14)}...${str.slice(-8)}`;
   };
+
+  const safeAddressString = (addr: any) => {
+    if (!addr) return '';
+    if (typeof addr === 'string') return addr;
+    return addr?.unshieldedAddress || addr?.address || String(addr);
+  };
+
+  const copyToClipboard = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
+  };
+
+  const isMainnetAddress = safeAddressString(address).startsWith('mn_addr1') || activeNetwork === 'mainnet';
 
   const faucetUrl =
     network === 'preview'
@@ -66,7 +93,7 @@ export const WalletCard: React.FC<WalletCardProps> = ({
           {isInstalled ? (
             <div>
               <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '14px' }}>
-                Midnight Lace extension detected! Click below to authorize your wallet.
+                Midnight Lace extension detected! Click below to authorize your wallet on <strong>{network.toUpperCase()}</strong>.
               </p>
               {availableWallets.length > 0 ? (
                 availableWallets.map((w) => (
@@ -136,42 +163,132 @@ export const WalletCard: React.FC<WalletCardProps> = ({
             <div
               style={{
                 marginTop: '12px',
-                padding: '8px 12px',
-                background: '#fef2f2',
-                border: '1px solid #fecaca',
-                borderRadius: '6px',
-                color: '#b91c1c',
+                padding: '10px 12px',
+                background: '#fff7ed',
+                border: '1px solid var(--border-orange)',
+                borderRadius: '8px',
+                color: 'var(--color-orange-dark)',
                 fontSize: '12px',
+                lineHeight: 1.4,
               }}
             >
-              {error}
+              <div style={{ fontWeight: 700, marginBottom: '4px' }}>Network Notice:</div>
+              <p style={{ whiteSpace: 'pre-line' }}>{error}</p>
+
+              {mismatchedNetwork && onSwitchNetwork && (
+                <button
+                  className="btn btn-secondary btn-sm btn-full"
+                  style={{ marginTop: '8px', borderColor: 'var(--color-orange-primary)' }}
+                  onClick={() => {
+                    onSwitchNetwork(mismatchedNetwork as 'preprod' | 'preview');
+                  }}
+                >
+                  Switch App to {mismatchedNetwork.toUpperCase()} &amp; Retry
+                </button>
+              )}
             </div>
           )}
         </div>
       ) : (
         <div>
-          {walletName && (
-            <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Connected via:</span>
               <span className="badge badge-network" style={{ padding: '2px 8px', fontSize: '11px' }}>
                 {walletName}
               </span>
             </div>
+            {activeNetwork && (
+              <span
+                className="badge"
+                style={{
+                  fontSize: '11px',
+                  backgroundColor: activeNetwork === 'mainnet' ? '#fee2e2' : 'var(--bg-accent)',
+                  color: activeNetwork === 'mainnet' ? '#b91c1c' : 'var(--color-orange-dark)',
+                  fontWeight: 600,
+                }}
+              >
+                Network: {activeNetwork.toUpperCase()}
+              </span>
+            )}
+          </div>
+
+          {/* Mainnet Warning Banner */}
+          {isMainnetAddress && (
+            <div
+              style={{
+                marginBottom: '14px',
+                padding: '12px',
+                background: '#fffbeb',
+                border: '1px solid #fde68a',
+                borderRadius: '8px',
+                fontSize: '12px',
+                color: '#92400e',
+                lineHeight: '1.5',
+              }}
+            >
+              <div style={{ fontWeight: 700, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>⚠️</span> Lace Wallet is currently set to Mainnet
+              </div>
+              <p style={{ margin: '0 0 6px 0' }}>
+                Your address starts with <code>mn_addr1...</code> (Mainnet). Testnet faucets will reject this address because they require a <strong>Preprod</strong> address (starting with <code>mn_addr_preprod1...</code>).
+              </p>
+              <div style={{ fontWeight: 600 }}>👉 How to get free testnet tNIGHT tokens:</div>
+              <ol style={{ margin: '4px 0 0 0', paddingLeft: '18px' }}>
+                <li>Open your Lace extension window</li>
+                <li>Go to <strong>Settings</strong> &rarr; <strong>Network</strong> and select <strong>Midnight Preprod</strong></li>
+                <li>Disconnect and Reconnect wallet here to load your Preprod address</li>
+              </ol>
+            </div>
           )}
 
           <div className="form-group">
-            <span className="form-label">Unshielded Address</span>
-            <div className="code-chip" style={{ width: '100%', padding: '8px 10px', wordBreak: 'break-all', fontSize: '12px' }}>
-              {address}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+              <span className="form-label" style={{ margin: 0 }}>Unshielded Address</span>
+              <button
+                type="button"
+                onClick={() => copyToClipboard(safeAddressString(address), 'unshielded')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: copiedKey === 'unshielded' ? '#16a34a' : 'var(--color-orange-primary)',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  padding: '2px 6px',
+                }}
+              >
+                {copiedKey === 'unshielded' ? '✓ Copied!' : 'Copy Address'}
+              </button>
             </div>
-            <p className="form-hint">Display: {address ? formatAddress(address) : ''}</p>
+            <div className="code-chip" style={{ width: '100%', padding: '8px 10px', wordBreak: 'break-all', fontSize: '12px' }}>
+              {safeAddressString(address)}
+            </div>
+            <p className="form-hint">Display: {formatAddress(address)}</p>
           </div>
 
           {shieldedAddress && (
             <div className="form-group">
-              <span className="form-label">Shielded Address (ZK)</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <span className="form-label" style={{ margin: 0 }}>Shielded Address (ZK)</span>
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(safeAddressString(shieldedAddress), 'shielded')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: copiedKey === 'shielded' ? '#16a34a' : 'var(--color-orange-primary)',
+                    cursor: 'pointer',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    padding: '2px 6px',
+                  }}
+                >
+                  {copiedKey === 'shielded' ? '✓ Copied!' : 'Copy Address'}
+                </button>
+              </div>
               <div className="code-chip" style={{ width: '100%', padding: '8px 10px', wordBreak: 'break-all', fontSize: '12px' }}>
-                {shieldedAddress}
+                {safeAddressString(shieldedAddress)}
               </div>
             </div>
           )}

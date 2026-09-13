@@ -29,7 +29,9 @@ export const ContractInfo: React.FC<ContractInfoProps> = ({
           <h2 className="card-title">Deployed Contract Info</h2>
           <p className="card-desc">Active contract addresses on Midnight networks</p>
         </div>
-        <span className="badge badge-network">Level 1 Passed</span>
+        <span className="badge badge-network">
+          <span className="status-dot"></span> Verified On-Chain
+        </span>
       </div>
 
       <div className="form-group">

@@ -10,8 +10,11 @@ import './styles/app.css';
 export const App: React.FC = () => {
   const [network, setNetwork] = useState<'preprod' | 'preview'>('preprod');
 
-  // Real Midnight Wallet Hook (Lace / window.midnight connector + dev fallback)
-  const wallet = useMidnightWallet(network);
+  // Real Midnight Wallet Hook with automatic network negotiation
+  const wallet = useMidnightWallet(network, (autoSwitchedNet) => {
+    console.log(`Auto-switched DApp network to match Lace wallet: ${autoSwitchedNet}`);
+    setNetwork(autoSwitchedNet);
+  });
 
   const [counter, setCounter] = useState<number>(42);
   const [totalUpdates, setTotalUpdates] = useState<number>(6);
@@ -54,31 +57,35 @@ export const App: React.FC = () => {
       <main className="container" style={{ flex: 1 }}>
         <section className="hero-section">
           <div className="hero-pill">
-            <span>●</span> Midnight Builder Challenge · Phase 1
+            <span>●</span> Midnight Zero-Knowledge Network
           </div>
           <h1 className="hero-title">
             Privacy-First Smart Contracts on <span>Midnight</span>
           </h1>
           <p className="hero-desc">
-            In the new moon, the sky holds the moon entirely in shadow — present, but unseen.
-            Build zero-knowledge smart contracts with private witnesses, public state, and deliberate disclosure.
+            Execute private zero-knowledge state transitions with client-side witness proving, cryptographic privacy boundaries, and deliberate on-chain disclosure.
           </p>
         </section>
 
         {/* Network Toggle Tabs */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '24px' }}>
-          <button
-            className={`btn btn-sm ${network === 'preprod' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setNetwork('preprod')}
-          >
-            Midnight Preprod
-          </button>
-          <button
-            className={`btn btn-sm ${network === 'preview' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setNetwork('preview')}
-          >
-            Midnight Preview
-          </button>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+            <button
+              className={`btn btn-sm ${network === 'preprod' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setNetwork('preprod')}
+            >
+              Midnight Preprod
+            </button>
+            <button
+              className={`btn btn-sm ${network === 'preview' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setNetwork('preview')}
+            >
+              Midnight Preview
+            </button>
+          </div>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+            Network: <strong>{network.toUpperCase()}</strong> (ensure your Lace extension network matches)
+          </span>
         </div>
 
         <div className="main-grid">
@@ -106,11 +113,14 @@ export const App: React.FC = () => {
               dustBalance={wallet.dustBalance}
               walletName={wallet.walletName}
               error={wallet.error}
+              mismatchedNetwork={wallet.mismatchedNetwork}
               network={network}
+              activeNetwork={wallet.activeNetwork}
               availableWallets={wallet.availableWallets}
               onConnectReal={wallet.connectRealWallet}
               onConnectDev={wallet.connectDevWallet}
               onDisconnect={wallet.disconnect}
+              onSwitchNetwork={setNetwork}
             />
             <ContractInfo
               network={network}
@@ -124,11 +134,7 @@ export const App: React.FC = () => {
       <footer className="app-footer">
         <div className="container">
           <p>
-            Built for <strong>Midnight Builder Challenge</strong> on{' '}
-            <a href="https://www.risein.com" target="_blank" rel="noreferrer" className="footer-link">
-              Rise In
-            </a>{' '}
-            · Level 1 (New Moon) Submission
+            Powered by <strong>Midnight Network</strong> · Privacy-Preserving Smart Contracts &amp; Zero-Knowledge State Proving
           </p>
         </div>
       </footer>
